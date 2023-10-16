@@ -100,6 +100,8 @@ app.post("/login", async (req, res) => {
           Level: userLevel,
           Name: name,
           Balance: balance,
+          id:userId,
+          token:token
         });
       } else {
         return res.json({ Message: "Credenciales incorrectas" });

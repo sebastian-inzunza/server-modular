@@ -74,13 +74,16 @@ app.post("/login", async (req, res) => {
       const storedHash = rows[0].passwordHash;
       const passwordMatch = await bcrypt.compare(password, storedHash);
 
+      console.log(rows)
+
+
       if (passwordMatch) {
         const name = rows[0].username;
         const userLevel = rows[0].userLevel;
         const balance = rows[0].balance;
         const userId = rows[0].userId;
 
-        console.log(name)
+        
 
         // Genera un token de autenticación con JWT
         const token = jwt.sign({ name }, "prueba", { expiresIn: "1d" });

@@ -25,7 +25,7 @@ const io = new Server(server2, {
 app.use(
   cors({
     // origin: "http://localhost:5173",
-    origin: "https://proyecto-modular-2.vercel.app"
+    origin: "https://proyecto-modular-2.vercel.app",
     methods: ["POST", "GET", "PUT"],
     credentials: true,
   })

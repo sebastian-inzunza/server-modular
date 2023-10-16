@@ -80,6 +80,8 @@ app.post("/login", async (req, res) => {
         const balance = rows[0].balance;
         const userId = rows[0].userId;
 
+        console.log(name)
+
         // Genera un token de autenticación con JWT
         const token = jwt.sign({ name }, "prueba", { expiresIn: "1d" });
 

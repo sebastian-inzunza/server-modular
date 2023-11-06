@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt"
 import http from "http"
 import { Server } from 'socket.io';
+import axios from "axios";
 
 const app = express();
 app.use(express.json());
@@ -17,15 +18,15 @@ const server2 = http.createServer(app);
 
 const io = new Server(server2, {
   cors: {
-    // origin: "http://localhost:5173",
-    origin: "https://proyecto-modular-2.vercel.app"
+    origin: "http://localhost:5173",
+    // origin: "https://proyecto-modular-2.vercel.app"
   },
 });
 
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "https://proyecto-modular-2.vercel.app",
+    origin: "http://localhost:5173",
+    // origin: "https://proyecto-modular-2.vercel.app",
     methods: ["POST", "GET", "PUT"],
     credentials: true,
   })
@@ -154,11 +155,64 @@ app.post("/login", async (req, res) => {
   //   }
   // });
 });
+app.get("/credits", async (req, res) => {
+  try {
+    const id = req.query.id; // Cambiado de req.body.id a req.query.id
+
+
+  //   // Ejecuta una consulta SQL segura para seleccionar el balance de un usuario por su ID
+   const [resultados, fields] = await pool.query("SELECT balance from users where userId=?", [id]);
+
+    // Verifica si se encontraron resultados
+    if (resultados.length > 0) {
+      res.json(resultados[0]); // Envía el primer resultado (debería ser único) al cliente
+    } else {
+      res.status(404).json({ error: "Usuario no encontrado" });
+    }
+  } catch (error) {
+    console.error("Error al seleccionar los datos:", error);
+    res.status(500).json({ error: "Error al seleccionar los datos" });
+  }
+});
+
+
+app.get("/paymethod", async (req, res) => {
+  try {
+    const id = req.query.id; // Cambiado de req.body.id a req.query.id
+
+
+  //   // Ejecuta una consulta SQL segura para seleccionar el balance de un usuario por su ID
+   const [resultados, fields] = await pool.query("SELECT paymethod from users where userId=?", [id]);
+
+    // Verifica si se encontraron resultados
+    if (resultados.length > 0) {
+      res.json(resultados[0]); // Envía el primer resultado (debería ser único) al cliente
+    } else {
+      res.status(404).json({ error: "Usuario no encontrado" });
+    }
+  } catch (error) {
+    console.error("Error al seleccionar los datos:", error);
+    res.status(500).json({ error: "Error al seleccionar los datos" });
+  }
+});
+
+app.get("/logout", (req, res) => {
+    console.log("entr22e")
+    res.clearCookie("token");
+    res.clearCookie("name");
+    res.clearCookie("balance");
+    res.clearCookie("level");
+    return res.json({ Status: "Success" });
+});
+
+
 
 app.get("/seleccionar-datos", async (req, res) => {
   try {
+    const tipo = req.query.tipo; // Accede al valor de "pendeja" desde la URL
+
     // Ejecuta una consulta SQL para seleccionar todos los datos de la tabla
-    const [resultados, fields] = await pool.query("SELECT * FROM events");
+    const [resultados, fields] = await pool.query("SELECT * FROM events WHERE deporte = ?", [tipo]);
 
     // Envia los resultados al cliente
     res.json(resultados);
@@ -182,6 +236,8 @@ io.on("connection", (socket) => {
     console.log("Cliente desconectado");
   });
 });
+
+
 
 
 const insertData = async (req, res) => {
@@ -247,6 +303,84 @@ app.post("/insertar", async (req, res) => {
     res.status(500).json({ error: "Error al insertar los datos" });
   }
 });
+
+
+app.put("/actualizarMetodoPago", async (req, res) => {
+  const {
+    saldo, userId
+  } = req.body;
+
+  const sql = "UPDATE users SET balance = ? WHERE userId = ?";
+  const values = [saldo,userId];
+
+  try {
+    const [updateResult] = await pool.query(sql, values);
+
+    if (updateResult.affectedRows > 0) {
+      res.status(200).json({ status: "OK" });
+    } else {
+      res.status(500).json({ error: "Error al actualizar los datos" });
+    }
+  } catch (error) {
+    console.error("Error al actualizar los datos:", error);
+    res.status(500).json({ error: "Error al actualizar los datos" });
+  }
+});
+const insertApuesta = async (req, res) => {
+  const { userId, eventId, amount, outcome, saldo } = req.body;
+  const sql = "INSERT INTO bets (userId, eventId, amount, outcome) VALUES (?, ?, ?, ?)";
+  const values = [userId, eventId, amount, outcome];
+let nuevaCantidad
+  try {
+    const result = await pool.query(sql, values);
+    const saldo = parseFloat(req.body.saldo); // O parseInt si se espera un número entero
+    const amount = parseFloat(req.body.amount); // O parseInt si se espera un número entero
+    
+    if (!isNaN(saldo) && !isNaN(amount)) {
+       nuevaCantidad = saldo - amount;
+      await updateBalance(userId, nuevaCantidad);
+    } else {
+      console.error("Saldo o amount no son números válidos");
+      // Manejar el error o devolver una respuesta adecuada
+    }
+    res.status(200).json({ message: "Apuesta agregada" , prueba: nuevaCantidad});
+  } catch (error) {
+    console.error("Error al insertar los datos:", error);
+    res.status(500).json({ error: "Error al insertar los datos" });
+  }
+};
+
+
+async function updateBalance(userId, newBalance) {
+  try {
+    const updateSql = "UPDATE users SET balance = ? WHERE userId = ?";
+    const updateValues = [newBalance, userId];
+    await pool.query(updateSql, updateValues);
+    console.log("Saldo actualizado correctamente");
+  } catch (error) {
+    console.error("Error al actualizar el saldo:", error);
+  }
+}
+
+app.put("/updateBalance/:userId", (req, res) => {
+  const userId = req.params.userId;
+  const newBalance = req.body.newBalance;
+
+  // Lógica de actualización de saldo aquí
+
+  res.status(200).json({ message: "Saldo actualizado correctamente" });
+});
+app.post("/insertApuesta", async (req, res) => {
+  try {
+    await insertApuesta(req, res);
+  } catch (error) {
+    console.error("Error en la ruta /insertApuesta:", error);
+    res.status(500).json({ error: "Error en la ruta /insertApuesta" });
+  }
+});
+
+
+app.post("/insertApuesta", insertApuesta);
 
 
 app.post("/registerUser", insertData);

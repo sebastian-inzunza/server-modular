@@ -207,14 +207,14 @@ app.get("/logout", (req, res) => {
 
 
 
-app.get("/seleccionar-datos", async (req, res) => {
+app.get("/seleccionar-datos/:tipo", async (req, res) => {
   try {
-    const tipo = req.query.tipo; // Accede al valor de "pendeja" desde la URL
+    const tipo = req.params.tipo; // Accede al valor del parámetro "tipo" desde la URL
 
-    // Ejecuta una consulta SQL para seleccionar todos los datos de la tabla
+    // Ejecuta una consulta SQL para seleccionar datos basados en el valor de "tipo"
     const [resultados, fields] = await pool.query("SELECT * FROM events WHERE deporte = ?", [tipo]);
 
-    // Envia los resultados al cliente
+    // Envía los resultados al cliente
     res.json(resultados);
 
     // Emite los resultados a través de Socket.io para actualizar el cliente

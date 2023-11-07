@@ -296,7 +296,7 @@ app.post("/insertar", async (req, res) => {
     
 
       // Emitir un evento a todos los clientes conectados con todos los datos
-      res.redirect("/seleccionar-datos");
+      res.redirect("/seleccionar-datos/"+deporte);
     } else {
       res.status(500).json({ error: "Error al insertar los datos" });
     }

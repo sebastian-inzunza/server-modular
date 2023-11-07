@@ -267,11 +267,12 @@ app.post("/insertar", async (req, res) => {
     oddsDraw,
     nombreLocal,
     nombreVisitante,
+    deporte
    
   } = req.body;
 
   const sql =
-    "INSERT INTO events ( eventName, eventDate, oddsLocalTeam, oddsVisitTeam, oddsDraw, nombreLocal, nombreVisitante) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    "INSERT INTO events ( eventName, eventDate, oddsLocalTeam, oddsVisitTeam, oddsDraw, nombreLocal, nombreVisitante, deporte) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   
   const values = [
     eventName,
@@ -281,6 +282,7 @@ app.post("/insertar", async (req, res) => {
     oddsDraw,
     nombreLocal,
     nombreVisitante,
+    deporte
 
   ];
 

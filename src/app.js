@@ -18,15 +18,15 @@ const server2 = http.createServer(app);
 
 const io = new Server(server2, {
   cors: {
-    // origin: "http://localhost:5173",
-     origin: "https://proyecto-modular-2.vercel.app"
+    //  origin: "http://localhost:5173",
+      origin: "https://proyecto-modular-2.vercel.app"
   },
 });
 
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-     origin: "https://proyecto-modular-2.vercel.app",
+    //  origin: "http://localhost:5173",
+    origin: "https://proyecto-modular-2.vercel.app",
     methods: ["POST", "GET", "PUT"],
     credentials: true,
   })
@@ -84,7 +84,7 @@ app.post("/login", async (req, res) => {
         const balance = rows[0].balance;
         const userId = rows[0].userId;
 
-        
+
 
         // Genera un token de autenticación con JWT
         const token = jwt.sign({ name }, "prueba", { expiresIn: "1d" });
@@ -238,6 +238,28 @@ io.on("connection", (socket) => {
 });
 
 
+app.get("/seleccionarApuestas/:id", async (req, res) => {
+  try {
+    const userId = req.params.id; // Accede al valor del parámetro "id" desde la URL
+
+    // Ejecuta una consulta SQL con INNER JOIN
+    const [resultados, fields] = await pool.query(
+      "SELECT bets.*, events.* FROM bets INNER JOIN events ON bets.eventId = events.eventId WHERE bets.userId = ?",
+      [userId]
+    );
+
+    // Envía los resultados al cliente
+    res.json(resultados);
+
+    // Emite los resultados a través de Socket.io para actualizar el cliente
+    io.emit("datos_actualizados", resultados);
+    console.log("entre");
+  } catch (error) {
+    console.error("Error al seleccionar los datos:", error);
+    res.status(500).json({ error: "Error al seleccionar los datos" });
+  }
+});
+
 
 
 const insertData = async (req, res) => {
@@ -268,12 +290,12 @@ app.post("/insertar", async (req, res) => {
     nombreLocal,
     nombreVisitante,
     deporte
-   
+
   } = req.body;
 
   const sql =
     "INSERT INTO events ( eventName, eventDate, oddsLocalTeam, oddsVisitTeam, oddsDraw, nombreLocal, nombreVisitante, deporte) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-  
+
   const values = [
     eventName,
     eventDate,
@@ -293,7 +315,7 @@ app.post("/insertar", async (req, res) => {
     if (insertResult.affectedRows > 0) {
       // La inserción fue exitosa, ahora selecciona los datos y envía una respuesta
       const sqlSelectAll = "SELECT * FROM events";
-    
+
 
       // Emitir un evento a todos los clientes conectados con todos los datos
       res.redirect("/seleccionar-datos/"+deporte);
@@ -330,14 +352,14 @@ app.put("/actualizarMetodoPago", async (req, res) => {
 });
 const insertApuesta = async (req, res) => {
   const { userId, eventId, amount, outcome, saldo } = req.body;
-  const sql = "INSERT INTO bets (userId, eventId, amount, outcome) VALUES (?, ?, ?, ?)";
+  const sql = "INSERT INTO bets (userId, eventId, amount, outcome, result) VALUES (?, ?, ?, ?,'En proceso')";
   const values = [userId, eventId, amount, outcome];
 let nuevaCantidad
   try {
     const result = await pool.query(sql, values);
     const saldo = parseFloat(req.body.saldo); // O parseInt si se espera un número entero
     const amount = parseFloat(req.body.amount); // O parseInt si se espera un número entero
-    
+
     if (!isNaN(saldo) && !isNaN(amount)) {
        nuevaCantidad = saldo - amount;
       await updateBalance(userId, nuevaCantidad);

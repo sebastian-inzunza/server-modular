@@ -369,6 +369,7 @@ let nuevaCantidad
     }
     res.status(200).json({ message: "Apuesta agregada" , prueba: nuevaCantidad});
   } catch (error) {
+    
     console.error("Error al insertar los datos:", error);
     res.status(500).json({ error: "Error al insertar los datos" });
   }

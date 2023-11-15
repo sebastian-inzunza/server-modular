@@ -238,30 +238,6 @@ io.on("connection", (socket) => {
 });
 
 
-app.get("/seleccionarApuestas/:id", async (req, res) => {
-  try {
-    const userId = req.params.id; // Accede al valor del parámetro "id" desde la URL
-
-    // Ejecuta una consulta SQL con INNER JOIN
-    const [resultados, fields] = await pool.query(
-      "SELECT bets.*, events.* FROM bets INNER JOIN events ON bets.eventId = events.eventId WHERE bets.userId = ?",
-      [userId]
-    );
-
-    // Envía los resultados al cliente
-    res.json(resultados);
-
-    // Emite los resultados a través de Socket.io para actualizar el cliente
-    io.emit("datos_actualizados", resultados);
-    console.log("entre");
-  } catch (error) {
-    console.error("Error al seleccionar los datos:", error);
-    res.status(500).json({ error: "Error al seleccionar los datos" });
-  }
-});
-
-
-
 const insertData = async (req, res) => {
   const { correo, contrasena } = req.body;
 
